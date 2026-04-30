@@ -28,6 +28,19 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "SiliFind membutuhkan akses galeri untuk memilih foto barang.",
+          "cameraPermission": "SiliFind membutuhkan akses kamera untuk mengambil foto barang."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SiliFind membutuhkan akses lokasi untuk mengisi lokasi laporan secara otomatis."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
