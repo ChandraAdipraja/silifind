@@ -9,8 +9,8 @@ const variants = {
   pending: "bg-amber-50 text-amber-700 ring-amber-200",
   approved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   rejected: "bg-rose-50 text-rose-700 ring-rose-200",
-  admin: "bg-blue-50 text-blue-700 ring-blue-200",
-  operator: "bg-teal-50 text-teal-700 ring-teal-200",
+  admin: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  operator: "bg-blue-50 text-blue-700 ring-blue-200",
   user: "bg-slate-50 text-slate-700 ring-slate-200",
 };
 
