@@ -1,98 +1,145 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { ReportCard } from '@/components/sili/ReportCard';
+import { ScrollScreen } from '@/components/sili/Screen';
+import { useAuth } from '@/contexts/auth-context';
+import { api, Claim, getErrorMessage, Report } from '@/lib/api';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { user } = useAuth();
+  const [reports, setReports] = useState<Report[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      async function load() {
+        setLoading(true);
+        try {
+          setError('');
+          const [reportsResponse, claimsResponse] = await Promise.all([
+            api.get('/reports'),
+            api.get('/claims/my-claims'),
+          ]);
+
+          if (active) {
+            setReports(reportsResponse.data);
+            setClaims(claimsResponse.data);
+          }
+        } catch (err) {
+          if (active) {
+            setError(getErrorMessage(err, 'Gagal memuat ringkasan'));
+          }
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      }
+
+      load();
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  const summary = useMemo(() => {
+    const mine = reports.filter((report) => {
+      const owner = typeof report.reportedBy === 'string' ? report.reportedBy : report.reportedBy?._id;
+      return owner === user?._id || owner === user?.id;
+    });
+
+    return {
+      reports: mine.length,
+      pending: claims.filter((claim) => claim.status === 'pending').length,
+      approved: claims.filter((claim) => claim.status === 'approved').length,
+      rejected: claims.filter((claim) => claim.status === 'rejected').length,
+    };
+  }, [claims, reports, user]);
+
+  const latestFound = reports.filter((report) => report.type === 'found').slice(0, 3);
+
+  return (
+    <ScrollScreen>
+      <View className="mb-6">
+        <Text className="text-sm font-bold uppercase tracking-wider text-primary-700">SiliFind</Text>
+        <Text className="mt-2 text-3xl font-extrabold text-ink">Halo, {user?.name ?? 'User'}</Text>
+        <Text className="mt-2 text-base leading-6 text-slate-500">
+          Temukan kembali barang kampus dengan laporan yang rapi dan klaim yang jelas.
+        </Text>
+      </View>
+
+      <View className="mb-6 flex-row gap-3">
+        <SummaryCard label="Laporan" value={summary.reports} />
+        <SummaryCard label="Pending" value={summary.pending} />
+        <SummaryCard label="Approved" value={summary.approved} />
+        <SummaryCard label="Rejected" value={summary.rejected} />
+      </View>
+
+      <View className="mb-6 gap-3">
+        <Shortcut title="Lapor Barang Hilang" icon="search-off" onPress={() => router.push('/(tabs)/report?type=lost')} />
+        <Shortcut title="Lapor Barang Ditemukan" icon="add-location-alt" onPress={() => router.push('/(tabs)/report?type=found')} />
+        <Shortcut title="Cari Barang Temuan" icon="travel-explore" onPress={() => router.push('/(tabs)/explore?filter=found')} />
+      </View>
+
+      <View className="mb-3 flex-row items-center justify-between">
+        <Text className="text-xl font-extrabold text-ink">Barang temuan terbaru</Text>
+        <Pressable onPress={() => router.push('/(tabs)/explore?filter=found')}>
+          <Text className="font-bold text-primary-700">Lihat semua</Text>
+        </Pressable>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color="#0f766e" />
+      ) : error ? (
+        <Text className="rounded-2xl bg-rose-50 p-4 font-semibold text-rose-600">{error}</Text>
+      ) : (
+        latestFound.map((report) => (
+          <ReportCard
+            key={report._id}
+            report={report}
+            onPress={() => router.push({ pathname: '/reports/[id]', params: { id: report._id } })}
+          />
+        ))
+      )}
+    </ScrollScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+function SummaryCard({ label, value }: { label: string; value: number }) {
+  return (
+    <View className="flex-1 rounded-2xl bg-white p-3 shadow-sm">
+      <Text className="text-2xl font-extrabold text-ink">{value}</Text>
+      <Text className="mt-1 text-xs font-semibold text-slate-500">{label}</Text>
+    </View>
+  );
+}
+
+function Shortcut({
+  title,
+  icon,
+  onPress,
+}: {
+  title: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} className="flex-row items-center gap-4 rounded-2xl bg-white p-4 shadow-sm active:opacity-80">
+      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary-50">
+        <MaterialIcons name={icon} size={24} color="#0f766e" />
+      </View>
+      <Text className="flex-1 text-base font-bold text-ink">{title}</Text>
+      <MaterialIcons name="chevron-right" size={24} color="#94a3b8" />
+    </Pressable>
+  );
+}
