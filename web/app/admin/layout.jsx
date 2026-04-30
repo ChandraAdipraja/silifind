@@ -13,6 +13,7 @@ export default function AdminLayout({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [denied, setDenied] = useState(false);
+  const [deniedMessage, setDeniedMessage] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -34,7 +35,8 @@ export default function AdminLayout({ children }) {
         }
 
         if (pathname === "/admin/users" && profile.role !== "admin") {
-          router.replace("/admin/dashboard");
+          setDeniedMessage("Akses ditolak. Users Management hanya dapat diakses oleh admin.");
+          setDenied(true);
           return;
         }
 
@@ -50,7 +52,7 @@ export default function AdminLayout({ children }) {
     loadProfile();
   }, [pathname, router]);
 
-  if (denied) return <AccessDenied />;
+  if (denied) return <AccessDenied message={deniedMessage || undefined} />;
 
   if (loading) {
     return (
