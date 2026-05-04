@@ -24,13 +24,12 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    router.replace("/login");
-  };
-
   if (loading) {
-    return <div className="text-sm font-semibold text-slate-500">Loading profile...</div>;
+    return (
+      <div className="text-sm font-semibold text-slate-500">
+        Loading profile...
+      </div>
+    );
   }
 
   const initial = (user?.name || user?.email || "S").charAt(0).toUpperCase();
@@ -44,27 +43,26 @@ export default function ProfilePage() {
           </div>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-semibold text-slate-950">{user?.name || "SiliFind Staff"}</h2>
+              <h2 className="text-2xl font-semibold text-slate-950">
+                {user?.name || "SiliFind Staff"}
+              </h2>
               <StatusBadge value={user?.role} />
             </div>
-            <p className="mt-2 text-sm text-slate-500">Akun web dashboard SiliFind.</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Akun web dashboard SiliFind.
+            </p>
           </div>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <ProfileItem icon={Mail} label="Email" value={user?.email} />
-          <ProfileItem icon={Phone} label="Phone Number" value={user?.phoneNumber} />
+          <ProfileItem
+            icon={Phone}
+            label="Phone Number"
+            value={user?.phoneNumber}
+          />
           <ProfileItem icon={UserRound} label="Role" value={user?.role} />
         </div>
-
-        <button
-          type="button"
-          onClick={logout}
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
-        >
-          <LogOut size={18} />
-          Logout
-        </button>
       </div>
     </div>
   );
@@ -78,8 +76,12 @@ function ProfileItem({ icon: Icon, label, value }) {
           <Icon size={19} />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-          <p className="mt-1 text-sm font-semibold text-slate-800">{value || "-"}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {label}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">
+            {value || "-"}
+          </p>
         </div>
       </div>
     </div>
