@@ -1,7 +1,6 @@
 "use client";
 
-import { UserRound } from "lucide-react";
-import RoleSelect from "./RoleSelect";
+import { Eye, Pencil, Trash2, UserRound } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
 const getUserId = (user) => user?._id || user?.id;
@@ -10,7 +9,9 @@ export default function UsersTable({
   users = [],
   currentUserId,
   disabled = false,
-  onRoleChange,
+  onDelete,
+  onEdit,
+  onView,
 }) {
   if (!users.length) {
     return (
@@ -85,11 +86,42 @@ export default function UsersTable({
                       : "-"}
                   </td>
                   <td className="px-5 py-4">
-                    <RoleSelect
-                      value={user.role}
-                      disabled={disabled}
-                      onChange={(role) => onRoleChange?.(user, role)}
-                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onView?.(user)}
+                        disabled={disabled}
+                        title="View user"
+                        aria-label={`View ${user.name || user.email || "user"}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEdit?.(user)}
+                        disabled={disabled}
+                        title="Edit user"
+                        aria-label={`Edit ${user.name || user.email || "user"}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-blue-200 text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete?.(user)}
+                        disabled={disabled || isCurrentUser}
+                        title={
+                          isCurrentUser
+                            ? "Current admin cannot be deleted"
+                            : "Delete user"
+                        }
+                        aria-label={`Delete ${user.name || user.email || "user"}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
