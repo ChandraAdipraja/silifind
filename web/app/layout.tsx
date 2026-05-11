@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "SiliFind Admin Dashboard",
-  description: "Web dashboard for SiliFind admins and operators",
+  description: "Dashboard admin dan operator untuk SiliFind",
+  applicationName: "SiliFind",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "SiliFind",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0f766e",
 };
 
 export default function RootLayout({
@@ -12,10 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className="h-full antialiased"
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-slate-50">{children}</body>
     </html>
   );
