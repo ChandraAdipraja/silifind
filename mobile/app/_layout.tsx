@@ -7,12 +7,15 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import { ToastProvider } from '@/contexts/toast-context';
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootNavigator />
-      <StatusBar style="dark" />
+      <ToastProvider>
+        <RootNavigator />
+        <StatusBar style="dark" />
+      </ToastProvider>
     </AuthProvider>
   );
 }

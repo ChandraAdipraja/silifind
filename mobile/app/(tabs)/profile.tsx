@@ -1,206 +1,172 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
-import { EmptyState } from '@/components/sili/EmptyState';
-import { ReportCard } from '@/components/sili/ReportCard';
-import { ScrollScreen } from '@/components/sili/Screen';
-import { useAuth } from '@/contexts/auth-context';
-import { api, getErrorMessage, Report } from '@/lib/api';
+import { EmptyState } from "@/components/sili/EmptyState";
+import { ReportCard } from "@/components/sili/ReportCard";
+import { ScrollScreen } from "@/components/sili/Screen";
+import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
+import { api, getErrorMessage, Report } from "@/lib/api";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, refreshProfile } = useAuth();
-  const [name, setName] = useState(user?.name ?? '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { showToast } = useToast();
+  const [name, setName] = useState(user?.name ?? "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [reports, setReports] = useState<Report[]>([]);
   const [reportsLoading, setReportsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const initial = user?.name?.charAt(0).toUpperCase() ?? 'U';
-  const email = user?.email?.toLowerCase() ?? '-';
+  const [editOpen, setEditOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
+  const email = user?.email?.toLowerCase() ?? "-";
 
   useEffect(() => {
-    setName(user?.name ?? '');
+    setName(user?.name ?? "");
   }, [user?.name]);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadReports() {
-      try {
-        const response = await api.get('/reports/my-reports');
-
-        if (active) {
-          setReports(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch (err) {
-        if (active) {
-          setError(getErrorMessage(err, 'Gagal memuat laporan saya'));
-        }
-      } finally {
-        if (active) {
-          setReportsLoading(false);
-        }
-      }
+  const loadReports = useCallback(async () => {
+    try {
+      const response = await api.get("/reports/my-reports");
+      setReports(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      showToast({
+        type: "error",
+        title: "Gagal memuat laporan",
+        message: getErrorMessage(err, "Gagal memuat laporan saya"),
+      });
+    } finally {
+      setReportsLoading(false);
     }
+  }, [showToast]);
 
+  useEffect(() => {
     loadReports();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  }, [loadReports]);
 
   async function handleLogout() {
     await logout();
-    router.replace('/auth/login');
+    router.replace("/auth/login");
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([refreshProfile(), loadReports()]);
+    } catch (err) {
+      showToast({
+        type: "error",
+        title: "Refresh gagal",
+        message: getErrorMessage(err, "Gagal memuat ulang profile"),
+      });
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   async function handleUpdateProfile() {
-    setMessage('');
-    setError('');
     setProfileLoading(true);
 
     try {
-      await api.put('/auth/profile', {
+      await api.put("/auth/profile", {
         name: name.trim(),
       });
       await refreshProfile();
-      setMessage('Profile berhasil diperbarui.');
+      setEditOpen(false);
+      showToast({
+        type: "success",
+        message: "Profile berhasil diperbarui.",
+      });
     } catch (err) {
-      setError(getErrorMessage(err, 'Gagal memperbarui profile'));
+      showToast({
+        type: "error",
+        title: "Gagal memperbarui profile",
+        message: getErrorMessage(err, "Gagal memperbarui profile"),
+      });
     } finally {
       setProfileLoading(false);
     }
   }
 
   async function handleResetPassword() {
-    setMessage('');
-    setError('');
     setPasswordLoading(true);
 
     try {
-      await api.put('/auth/reset-password', {
+      await api.put("/auth/reset-password", {
         currentPassword,
         newPassword,
         confirmPassword,
       });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setMessage('Password berhasil diperbarui.');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordOpen(false);
+      showToast({
+        type: "success",
+        message: "Password berhasil diperbarui.",
+      });
     } catch (err) {
-      setError(getErrorMessage(err, 'Gagal memperbarui password'));
+      showToast({
+        type: "error",
+        title: "Gagal memperbarui password",
+        message: getErrorMessage(err, "Gagal memperbarui password"),
+      });
     } finally {
       setPasswordLoading(false);
     }
   }
 
   return (
-    <ScrollScreen>
+    <ScrollScreen refreshing={refreshing} onRefresh={handleRefresh}>
       <View className="items-center rounded-3xl bg-white p-6 shadow-sm">
         <View className="h-24 w-24 items-center justify-center rounded-full bg-primary-100">
-          <Text className="text-4xl font-extrabold text-primary-700">{initial}</Text>
+          <Text className="text-4xl font-extrabold text-primary-700">
+            {initial}
+          </Text>
         </View>
-        <Text className="mt-4 text-2xl font-extrabold text-ink">{user?.name ?? '-'}</Text>
+        <Text className="mt-4 text-2xl font-extrabold text-ink">
+          {user?.name ?? "-"}
+        </Text>
         <Text className="mt-1 text-slate-500">{email}</Text>
+
+        <View className="mt-5 flex-row gap-3">
+          <IconAction
+            icon="edit"
+            label="Edit Profile"
+            onPress={() => setEditOpen(true)}
+          />
+          <IconAction
+            icon="lock-reset"
+            label="Password"
+            onPress={() => setPasswordOpen(true)}
+          />
+          <IconAction
+            icon="logout"
+            label="Logout"
+            danger
+            onPress={handleLogout}
+          />
+        </View>
       </View>
 
       <View className="mt-6 gap-3">
-        <Info icon="phone" label="Phone" value={user?.phoneNumber ?? '-'} />
-        <Info icon="badge" label="Role" value={user?.role ?? '-'} />
+        <Info icon="phone" label="Phone" value={user?.phoneNumber ?? "-"} />
         <Info icon="mail" label="Email" value={email} />
-      </View>
-
-      {message ? (
-        <Text className="mt-5 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-700">
-          {message}
-        </Text>
-      ) : null}
-
-      {error ? (
-        <Text className="mt-5 rounded-2xl bg-rose-50 px-4 py-3 font-semibold text-rose-600">
-          {error}
-        </Text>
-      ) : null}
-
-      <View className="mt-6 gap-4 rounded-3xl bg-white p-5 shadow-sm">
-        <View>
-          <Text className="text-lg font-extrabold text-ink">Edit Profile</Text>
-          <Text className="mt-1 text-sm text-slate-500">
-            Perbarui nama lengkap yang tampil di akun kamu.
-          </Text>
-        </View>
-        <Field
-          label="Nama Lengkap"
-          placeholder="Nama lengkap"
-          value={name}
-          onChangeText={setName}
-        />
-        <Pressable
-          disabled={profileLoading}
-          onPress={handleUpdateProfile}
-          className="h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-primary-700 active:opacity-80 disabled:opacity-60"
-        >
-          {profileLoading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <>
-              <MaterialIcons name="save" size={20} color="#ffffff" />
-              <Text className="font-extrabold text-white">Simpan Profile</Text>
-            </>
-          )}
-        </Pressable>
-      </View>
-
-      <View className="mt-6 gap-4 rounded-3xl bg-white p-5 shadow-sm">
-        <View>
-          <Text className="text-lg font-extrabold text-ink">Reset Password</Text>
-          <Text className="mt-1 text-sm text-slate-500">
-            Masukkan password saat ini untuk mengganti password akun.
-          </Text>
-        </View>
-        <Field
-          label="Password Saat Ini"
-          placeholder="Password saat ini"
-          value={currentPassword}
-          secureTextEntry
-          onChangeText={setCurrentPassword}
-        />
-        <Field
-          label="Password Baru"
-          placeholder="Password baru"
-          value={newPassword}
-          secureTextEntry
-          onChangeText={setNewPassword}
-        />
-        <Field
-          label="Konfirmasi Password Baru"
-          placeholder="Konfirmasi password baru"
-          value={confirmPassword}
-          secureTextEntry
-          onChangeText={setConfirmPassword}
-        />
-        <Pressable
-          disabled={passwordLoading}
-          onPress={handleResetPassword}
-          className="h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-slate-900 active:opacity-80 disabled:opacity-60"
-        >
-          {passwordLoading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <>
-              <MaterialIcons name="lock-reset" size={20} color="#ffffff" />
-              <Text className="font-extrabold text-white">Update Password</Text>
-            </>
-          )}
-        </Pressable>
       </View>
 
       <View className="mt-8">
@@ -224,7 +190,7 @@ export default function ProfileScreen() {
                 report={report}
                 onPress={() =>
                   router.push({
-                    pathname: '/reports/[id]',
+                    pathname: "/reports/[id]",
                     params: { id: report._id },
                   })
                 }
@@ -239,11 +205,165 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <Pressable onPress={handleLogout} className="mt-6 h-14 flex-row items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white active:opacity-80">
-        <MaterialIcons name="logout" size={20} color="#e11d48" />
-        <Text className="font-extrabold text-rose-600">Logout</Text>
-      </Pressable>
+      <ProfileModal
+        open={editOpen}
+        title="Edit Profile"
+        description="Perbarui nama lengkap yang tampil di akun kamu."
+        onClose={() => setEditOpen(false)}
+      >
+        <Field
+          label="Nama Lengkap"
+          placeholder="Nama lengkap"
+          value={name}
+          onChangeText={setName}
+        />
+        <ModalButton
+          icon="save"
+          label="Simpan Profile"
+          loading={profileLoading}
+          onPress={handleUpdateProfile}
+        />
+      </ProfileModal>
+
+      <ProfileModal
+        open={passwordOpen}
+        title="Reset Password"
+        description="Masukkan password saat ini untuk mengganti password akun."
+        onClose={() => setPasswordOpen(false)}
+      >
+        <Field
+          label="Password Saat Ini"
+          placeholder="Password saat ini"
+          value={currentPassword}
+          secureTextEntry
+          onChangeText={setCurrentPassword}
+        />
+        <Field
+          label="Password Baru"
+          placeholder="Password baru"
+          value={newPassword}
+          secureTextEntry
+          onChangeText={setNewPassword}
+        />
+        <Field
+          label="Konfirmasi Password Baru"
+          placeholder="Konfirmasi password baru"
+          value={confirmPassword}
+          secureTextEntry
+          onChangeText={setConfirmPassword}
+        />
+        <ModalButton
+          icon="lock-reset"
+          label="Update Password"
+          loading={passwordLoading}
+          onPress={handleResetPassword}
+        />
+      </ProfileModal>
     </ScrollScreen>
+  );
+}
+
+function IconAction({
+  danger = false,
+  icon,
+  label,
+  onPress,
+}: {
+  danger?: boolean;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`h-12 flex-row items-center gap-2 rounded-2xl px-4 active:opacity-80 ${
+        danger ? "bg-rose-50" : "bg-primary-50"
+      }`}
+    >
+      <MaterialIcons
+        name={icon}
+        size={20}
+        color={danger ? "#e11d48" : "#0f766e"}
+      />
+      <Text
+        className={`text-sm font-extrabold ${danger ? "text-rose-600" : "text-primary-700"}`}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function ProfileModal({
+  children,
+  description,
+  onClose,
+  open,
+  title,
+}: {
+  children: React.ReactNode;
+  description: string;
+  onClose: () => void;
+  open: boolean;
+  title: string;
+}) {
+  return (
+    <Modal
+      visible={open}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-center bg-slate-950/40 px-5">
+        <View className="gap-4 rounded-3xl bg-white p-5 shadow-sm">
+          <View className="flex-row items-start justify-between gap-4">
+            <View className="flex-1">
+              <Text className="text-xl font-extrabold text-ink">{title}</Text>
+              <Text className="mt-1 text-sm leading-5 text-slate-500">
+                {description}
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              className="h-10 w-10 items-center justify-center rounded-2xl bg-slate-100"
+            >
+              <MaterialIcons name="close" size={20} color="#475569" />
+            </Pressable>
+          </View>
+          {children}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function ModalButton({
+  icon,
+  label,
+  loading,
+  onPress,
+}: {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      disabled={loading}
+      onPress={onPress}
+      className="h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-primary-700 active:opacity-80 disabled:opacity-60"
+    >
+      {loading ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <>
+          <MaterialIcons name={icon} size={20} color="#ffffff" />
+          <Text className="font-extrabold text-white">{label}</Text>
+        </>
+      )}
+    </Pressable>
   );
 }
 
@@ -275,14 +395,24 @@ function Field({
   );
 }
 
-function Info({ icon, label, value }: { icon: keyof typeof MaterialIcons.glyphMap; label: string; value: string }) {
+function Info({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  value: string;
+}) {
   return (
     <View className="flex-row items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
       <View className="h-11 w-11 items-center justify-center rounded-2xl bg-primary-50">
         <MaterialIcons name={icon} size={22} color="#0f766e" />
       </View>
       <View>
-        <Text className="text-xs font-bold uppercase text-slate-400">{label}</Text>
+        <Text className="text-xs font-bold uppercase text-slate-400">
+          {label}
+        </Text>
         <Text className="mt-1 text-base font-bold text-ink">{value}</Text>
       </View>
     </View>

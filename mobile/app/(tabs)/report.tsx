@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 
 import { ImageInput } from '@/components/sili/ImageInput';
 import { ScrollScreen } from '@/components/sili/Screen';
+import { useToast } from '@/contexts/toast-context';
 import { Coordinates, useCurrentLocation } from '@/hooks/use-current-location';
 import { api, getErrorMessage, uploadImage } from '@/lib/api';
 
@@ -23,6 +24,7 @@ const CATEGORY_OPTIONS = [
 
 export default function ReportScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const params = useLocalSearchParams<{ type?: ReportType }>();
   const [type, setType] = useState<ReportType>('lost');
   const [title, setTitle] = useState('');
@@ -96,6 +98,10 @@ export default function ReportScreen() {
       setCoordinates(null);
       setDetectedLocationName('');
       setImage(null);
+      showToast({
+        type: 'success',
+        message: 'Laporan berhasil dibuat.',
+      });
       router.push('/(tabs)/explore');
     } catch (err) {
       setError(getErrorMessage(err, 'Gagal membuat laporan'));

@@ -13,10 +13,12 @@ import {
 import { ImageInput } from "@/components/sili/ImageInput";
 import { RemoteImage } from "@/components/sili/RemoteImage";
 import { ScrollScreen } from "@/components/sili/Screen";
+import { useToast } from "@/contexts/toast-context";
 import { api, getErrorMessage, Report, uploadImage } from "@/lib/api";
 
 export default function CreateClaimScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const { reportId } = useLocalSearchParams<{ reportId: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [proofDescription, setProofDescription] = useState("");
@@ -62,6 +64,10 @@ export default function CreateClaimScreen() {
         proofImage: proofImageUrl,
       });
 
+      showToast({
+        type: "success",
+        message: "Klaim berhasil diajukan.",
+      });
       router.replace("/(tabs)/claims");
     } catch (err) {
       setError(getErrorMessage(err, "Gagal mengirim klaim"));

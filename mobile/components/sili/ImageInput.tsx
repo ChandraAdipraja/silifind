@@ -1,6 +1,8 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
-import { Alert, Image, Platform, Pressable, Text, View } from "react-native";
+import { Image, Platform, Pressable, Text, View } from "react-native";
+
+import { useToast } from "@/contexts/toast-context";
 
 type ImageInputProps = {
   label: string;
@@ -9,15 +11,18 @@ type ImageInputProps = {
 };
 
 export function ImageInput({ label, value, onChange }: ImageInputProps) {
+  const { showToast } = useToast();
+
   async function openCamera() {
     if (Platform.OS !== "web") {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
 
       if (!permission.granted) {
-        Alert.alert(
-          "Izin kamera dibutuhkan",
-          "Aktifkan izin kamera untuk mengambil foto barang.",
-        );
+        showToast({
+          type: "error",
+          title: "Izin kamera dibutuhkan",
+          message: "Aktifkan izin kamera untuk mengambil foto barang.",
+        });
         return;
       }
     }
@@ -37,10 +42,11 @@ export function ImageInput({ label, value, onChange }: ImageInputProps) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert(
-        "Izin galeri dibutuhkan",
-        "Aktifkan izin galeri untuk memilih foto barang.",
-      );
+      showToast({
+        type: "error",
+        title: "Izin galeri dibutuhkan",
+        message: "Aktifkan izin galeri untuk memilih foto barang.",
+      });
       return;
     }
 

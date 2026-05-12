@@ -11,7 +11,18 @@ import { api, Claim, getErrorMessage } from '@/lib/api';
 export default function ClaimsScreen() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  const loadClaims = useCallback(async () => {
+    try {
+      setError('');
+      const response = await api.get('/claims/my-claims');
+      setClaims(response.data);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Gagal memuat klaim'));
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -20,11 +31,7 @@ export default function ClaimsScreen() {
       async function load() {
         setLoading(true);
         try {
-          setError('');
-          const response = await api.get('/claims/my-claims');
-          if (active) {
-            setClaims(response.data);
-          }
+          await loadClaims();
         } catch (err) {
           if (active) {
             setError(getErrorMessage(err, 'Gagal memuat klaim'));
@@ -41,11 +48,21 @@ export default function ClaimsScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [loadClaims]),
   );
 
+  async function handleRefresh() {
+    setRefreshing(true);
+
+    try {
+      await loadClaims();
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
-    <ScrollScreen>
+    <ScrollScreen refreshing={refreshing} onRefresh={handleRefresh}>
       <Text className="text-3xl font-extrabold text-ink">Claims</Text>
       <Text className="mt-2 text-base text-slate-500">Pantau status klaim barang yang kamu ajukan.</Text>
 

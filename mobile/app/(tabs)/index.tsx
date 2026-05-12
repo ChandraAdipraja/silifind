@@ -14,7 +14,23 @@ export default function HomeScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      setError('');
+      const [reportsResponse, claimsResponse] = await Promise.all([
+        api.get('/reports'),
+        api.get('/claims/my-claims'),
+      ]);
+
+      setReports(reportsResponse.data);
+      setClaims(claimsResponse.data);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Gagal memuat ringkasan'));
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -23,16 +39,7 @@ export default function HomeScreen() {
       async function load() {
         setLoading(true);
         try {
-          setError('');
-          const [reportsResponse, claimsResponse] = await Promise.all([
-            api.get('/reports'),
-            api.get('/claims/my-claims'),
-          ]);
-
-          if (active) {
-            setReports(reportsResponse.data);
-            setClaims(claimsResponse.data);
-          }
+          await loadDashboard();
         } catch (err) {
           if (active) {
             setError(getErrorMessage(err, 'Gagal memuat ringkasan'));
@@ -49,8 +56,18 @@ export default function HomeScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [loadDashboard]),
   );
+
+  async function handleRefresh() {
+    setRefreshing(true);
+
+    try {
+      await loadDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const summary = useMemo(() => {
     const mine = reports.filter((report) => {
@@ -69,7 +86,7 @@ export default function HomeScreen() {
   const latestFound = reports.filter((report) => report.type === 'found').slice(0, 3);
 
   return (
-    <ScrollScreen>
+    <ScrollScreen refreshing={refreshing} onRefresh={handleRefresh}>
       <View className="mb-6">
         <Text className="text-sm font-bold uppercase tracking-wider text-primary-700">SiliFind</Text>
         <Text className="mt-2 text-3xl font-extrabold text-ink">Halo, {user?.name ?? 'User'}</Text>

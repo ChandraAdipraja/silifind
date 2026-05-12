@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+
+import { useToast } from '@/contexts/toast-context';
 
 export type Coordinates = {
   lat: number;
@@ -14,6 +15,7 @@ type CurrentLocationResult = {
 };
 
 export function useCurrentLocation() {
+  const { showToast } = useToast();
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
 
@@ -27,7 +29,11 @@ export function useCurrentLocation() {
       if (permission.status !== Location.PermissionStatus.GRANTED) {
         const message = 'Izin lokasi ditolak. Kamu tetap bisa mengisi lokasi secara manual.';
         setLocationError(message);
-        Alert.alert('Lokasi tidak diizinkan', message);
+        showToast({
+          type: 'error',
+          title: 'Lokasi tidak diizinkan',
+          message,
+        });
         return null;
       }
 
@@ -55,7 +61,11 @@ export function useCurrentLocation() {
     } catch {
       const message = 'Gagal mengambil lokasi saat ini. Silakan isi lokasi secara manual.';
       setLocationError(message);
-      Alert.alert('GPS gagal', message);
+      showToast({
+        type: 'error',
+        title: 'GPS gagal',
+        message,
+      });
       return null;
     } finally {
       setIsDetectingLocation(false);
