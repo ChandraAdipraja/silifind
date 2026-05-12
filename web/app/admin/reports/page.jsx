@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ImageOff, X } from "lucide-react";
 import api from "../../../lib/api";
+import ConfirmationModal from "../../../components/admin/ConfirmationModal";
 import ReportsTable from "../../../components/admin/ReportsTable";
 import StatusBadge from "../../../components/admin/StatusBadge";
 
@@ -21,14 +22,30 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const loadReports = async () => {
+    try {
+      const response = await api.get("/reports");
+      setReports(toList(response.data));
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal memuat laporan.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadReports = async () => {
+    const loadInitialReports = async () => {
       try {
         const response = await api.get("/reports");
         setReports(toList(response.data));
+        setError("");
       } catch (err) {
         setError(err.response?.data?.message || "Gagal memuat laporan.");
       } finally {
@@ -36,8 +53,32 @@ export default function ReportsPage() {
       }
     };
 
-    loadReports();
+    loadInitialReports();
   }, []);
+
+  const deleteReport = async () => {
+    if (!deleteConfirm) return;
+
+    const id = deleteConfirm._id || deleteConfirm.id;
+
+    setProcessing(true);
+    setMessage("");
+    setError("");
+
+    try {
+      await api.delete(`/reports/${id}`);
+      setMessage("Laporan berhasil dihapus.");
+      setDeleteConfirm(null);
+      setSelected((current) =>
+        (current?._id || current?.id) === id ? null : current,
+      );
+      await loadReports();
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal menghapus laporan.");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const filteredReports = useMemo(() => {
     const keyword = search.toLowerCase();
@@ -95,15 +136,38 @@ export default function ReportsPage() {
         </div>
       ) : null}
 
+      {message ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {message}
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="text-sm font-semibold text-slate-500">Loading reports...</div>
       ) : (
-        <ReportsTable reports={filteredReports} onView={setSelected} />
+        <ReportsTable
+          reports={filteredReports}
+          onDelete={setDeleteConfirm}
+          onView={setSelected}
+        />
       )}
 
       {selected ? (
         <ReportDetailModal report={selected} onClose={() => setSelected(null)} />
       ) : null}
+
+      <ConfirmationModal
+        open={Boolean(deleteConfirm)}
+        title="Delete report?"
+        description={`Laporan "${
+          deleteConfirm?.title || "ini"
+        }" akan dihapus beserta klaim yang terkait.`}
+        confirmText="Delete"
+        intent="danger"
+        loading={processing}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={deleteReport}
+      />
     </div>
   );
 }

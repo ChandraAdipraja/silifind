@@ -5,6 +5,7 @@ const {
   getMyClaims,
   getAllClaims,
   approveClaim,
+  deleteClaim,
   rejectClaim,
 } = require("../controllers/claimController");
 
@@ -29,6 +30,13 @@ router.put(
   protect,
   authorizeRoles("admin", "operator"),
   rejectClaim,
+);
+
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "operator"),
+  deleteClaim,
 );
 
 module.exports = router;

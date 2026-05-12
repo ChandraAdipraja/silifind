@@ -57,22 +57,36 @@ export default function ClaimsPage() {
   const processClaim = async () => {
     if (!confirm?.claim) return;
     const id = confirm.claim._id || confirm.claim.id;
+    const deleting = confirm.action === "delete";
 
     setProcessing(true);
     setMessage("");
     setError("");
 
     try {
-      await api.put(`/claims/${id}/${confirm.action}`);
+      if (deleting) {
+        await api.delete(`/claims/${id}`);
+      } else {
+        await api.put(`/claims/${id}/${confirm.action}`);
+      }
+
       setMessage(
-        confirm.action === "approve"
+        deleting
+          ? "Klaim berhasil dihapus."
+          : confirm.action === "approve"
           ? "Klaim berhasil disetujui."
           : "Klaim berhasil ditolak."
       );
       setConfirm(null);
+      setSelected((current) =>
+        (current?._id || current?.id) === id ? null : current,
+      );
       await loadClaims();
     } catch (err) {
-      setError(err.response?.data?.message || "Gagal memproses klaim.");
+      setError(
+        err.response?.data?.message ||
+          (deleting ? "Gagal menghapus klaim." : "Gagal memproses klaim."),
+      );
     } finally {
       setProcessing(false);
     }
@@ -115,6 +129,7 @@ export default function ClaimsPage() {
           claims={claims}
           onView={setSelected}
           onApprove={(claim) => setConfirm({ action: "approve", claim })}
+          onDelete={(claim) => setConfirm({ action: "delete", claim })}
           onReject={(claim) => setConfirm({ action: "reject", claim })}
         />
       )}
@@ -125,14 +140,28 @@ export default function ClaimsPage() {
 
       <ConfirmationModal
         open={Boolean(confirm)}
-        title={confirm?.action === "approve" ? "Approve claim?" : "Reject claim?"}
+        title={
+          confirm?.action === "delete"
+            ? "Delete claim?"
+            : confirm?.action === "approve"
+              ? "Approve claim?"
+              : "Reject claim?"
+        }
         description={
-          confirm?.action === "approve"
+          confirm?.action === "delete"
+            ? "Klaim ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan."
+            : confirm?.action === "approve"
             ? "Claim ini akan disetujui dan status klaim akan diperbarui."
             : "Claim ini akan ditolak dan claimant perlu mengajukan bukti ulang bila diperlukan."
         }
-        confirmText={confirm?.action === "approve" ? "Approve" : "Reject"}
-        intent={confirm?.action === "reject" ? "danger" : "primary"}
+        confirmText={
+          confirm?.action === "delete"
+            ? "Delete"
+            : confirm?.action === "approve"
+              ? "Approve"
+              : "Reject"
+        }
+        intent={confirm?.action === "approve" ? "primary" : "danger"}
         loading={processing}
         onClose={() => setConfirm(null)}
         onConfirm={processClaim}

@@ -105,6 +105,12 @@ const availableEndpoints = [
     description: "Reject a claim",
   },
   {
+    method: "DELETE",
+    path: "/api/claims/:id",
+    access: "admin/operator",
+    description: "Delete a claim",
+  },
+  {
     method: "POST",
     path: "/api/uploads",
     access: "authenticated",

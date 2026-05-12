@@ -192,10 +192,34 @@ const rejectClaim = async (req, res) => {
   }
 };
 
+const deleteClaim = async (req, res) => {
+  try {
+    const claim = await Claim.findById(req.params.id);
+
+    if (!claim) {
+      return res.status(404).json({
+        message: "Klaim tidak ditemukan",
+      });
+    }
+
+    await claim.deleteOne();
+
+    return res.status(200).json({
+      message: "Klaim berhasil dihapus",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createClaim,
   getMyClaims,
   getAllClaims,
   approveClaim,
   rejectClaim,
+  deleteClaim,
 };

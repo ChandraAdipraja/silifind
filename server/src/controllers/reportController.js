@@ -1,3 +1,4 @@
+const Claim = require("../models/Claim");
 const Report = require("../models/Report");
 
 const createReport = async (req, res) => {
@@ -76,12 +77,16 @@ const deleteReport = async (req, res) => {
     });
   }
 
-  if (report.reportedBy.toString() !== req.user._id.toString()) {
+  const canModerate = ["admin", "operator"].includes(req.user.role);
+  const isOwner = report.reportedBy.toString() === req.user._id.toString();
+
+  if (!isOwner && !canModerate) {
     return res.status(403).json({
       message: "Tidak punya akses",
     });
   }
 
+  await Claim.deleteMany({ report: report._id });
   await report.deleteOne();
 
   res.json({

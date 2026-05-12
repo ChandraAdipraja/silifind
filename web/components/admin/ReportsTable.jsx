@@ -1,12 +1,17 @@
 "use client";
 
-import { Eye, ImageOff } from "lucide-react";
+import { Eye, ImageOff, Trash2 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
 const getReporter = (report) =>
   report?.reportedBy || report?.user || report?.reporter || {};
 
-export default function ReportsTable({ reports = [], compact = false, onView }) {
+export default function ReportsTable({
+  reports = [],
+  compact = false,
+  onDelete,
+  onView,
+}) {
   if (!reports.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
@@ -95,7 +100,9 @@ export default function ReportsTable({ reports = [], compact = false, onView }) 
                     <StatusBadge value={report.status} />
                   </td>
                   <td className="max-w-52 px-5 py-4 text-sm text-slate-600">
-                    <span className="line-clamp-1">{report.location || "-"}</span>
+                    <span className="line-clamp-1">
+                      {report.location || "-"}
+                    </span>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-600">
                     {reporter.name || reporter.email || "-"}
@@ -104,18 +111,28 @@ export default function ReportsTable({ reports = [], compact = false, onView }) 
                     <>
                       <td className="px-5 py-4 text-sm text-slate-600">
                         {report.createdAt
-                          ? new Date(report.createdAt).toLocaleDateString("id-ID")
+                          ? new Date(report.createdAt).toLocaleDateString(
+                              "id-ID",
+                            )
                           : "-"}
                       </td>
                       <td className="px-5 py-4">
-                        <button
-                          type="button"
-                          onClick={() => onView?.(report)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                        >
-                          <Eye size={16} />
-                          View
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onView?.(report)}
+                            className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDelete?.(report)}
+                            className="inline-flex h-9 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </>
                   ) : null}

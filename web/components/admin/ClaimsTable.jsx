@@ -1,15 +1,17 @@
 "use client";
 
-import { CheckCircle2, Eye, ImageOff, XCircle } from "lucide-react";
+import { CheckCircle2, Eye, ImageOff, Trash2, XCircle } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
 const getClaimant = (claim) => claim?.claimant || claim?.user || {};
-const getReport = (claim) => claim?.report || claim?.item || claim?.claimedItem || {};
+const getReport = (claim) =>
+  claim?.report || claim?.item || claim?.claimedItem || {};
 
 export default function ClaimsTable({
   claims = [],
   compact = false,
   onApprove,
+  onDelete,
   onReject,
   onView,
 }) {
@@ -63,7 +65,10 @@ export default function ClaimsTable({
               const pending = String(claim.status).toLowerCase() === "pending";
 
               return (
-                <tr key={claim._id || claim.id} className="transition hover:bg-slate-50">
+                <tr
+                  key={claim._id || claim.id}
+                  className="transition hover:bg-slate-50"
+                >
                   <td className="px-5 py-4">
                     <p className="text-sm font-semibold text-slate-950">
                       {claimant.name || "-"}
@@ -114,7 +119,6 @@ export default function ClaimsTable({
                           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                         >
                           <Eye size={16} />
-                          Detail
                         </button>
                         {pending ? (
                           <>
@@ -140,6 +144,13 @@ export default function ClaimsTable({
                             Processed
                           </span>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => onDelete?.(claim)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   ) : null}
