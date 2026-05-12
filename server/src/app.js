@@ -11,7 +11,7 @@ const userRoutes = require("./routes/userRoutes");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "12mb" }));
 
 const availableEndpoints = [
   {
@@ -109,6 +109,12 @@ const availableEndpoints = [
     path: "/api/uploads",
     access: "authenticated",
     description: "Upload an image",
+  },
+  {
+    method: "POST",
+    path: "/api/uploads/base64",
+    access: "authenticated",
+    description: "Upload a base64 image",
   },
   {
     method: "GET",

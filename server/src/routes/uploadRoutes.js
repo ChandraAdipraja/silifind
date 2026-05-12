@@ -1,6 +1,6 @@
 const express = require("express");
 const upload = require("../middleware/uploadMiddleware");
-const { uploadImage } = require("../controllers/uploadController");
+const { uploadBase64Image, uploadImage } = require("../controllers/uploadController");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -25,5 +25,6 @@ const handleImageUpload = (req, res, next) => {
 };
 
 router.post("/", protect, handleImageUpload, uploadImage);
+router.post("/base64", protect, uploadBase64Image);
 
 module.exports = router;
