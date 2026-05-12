@@ -41,7 +41,7 @@ export default function Sidebar({ user }) {
         </div>
         <div>
           <p className="text-lg font-semibold text-slate-950">SiliFind</p>
-          <p className="text-xs font-medium text-slate-500">Admin Console</p>
+          <p className="text-xs font-medium text-slate-500">{user?.name}</p>
         </div>
       </Link>
 

@@ -54,7 +54,7 @@ export default function LoginPage() {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Login gagal. Periksa email dan password."
+          "Login gagal. Periksa email dan password.",
       );
     } finally {
       setLoading(false);
@@ -82,16 +82,13 @@ export default function LoginPage() {
 
       <section className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-teal-600">
-              Admin / Operator
+              Selamat datang, silahkan
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               Masuk ke Dashboard
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Akses web hanya tersedia untuk admin dan operator SiliFind.
-            </p>
           </div>
 
           {error ? (
@@ -102,7 +99,9 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Email</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Email
+              </span>
               <div className="relative mt-2">
                 <Mail
                   size={18}
@@ -113,7 +112,10 @@ export default function LoginPage() {
                   required
                   value={form.email}
                   onChange={(event) =>
-                    setForm((current) => ({ ...current, email: event.target.value }))
+                    setForm((current) => ({
+                      ...current,
+                      email: event.target.value,
+                    }))
                   }
                   className="h-12 w-full rounded-2xl border border-slate-200 pl-10 pr-4 text-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
                   placeholder="admin@silifind.ac.id"
