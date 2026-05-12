@@ -31,6 +31,14 @@ const getReports = async (req, res) => {
   res.json(reports);
 };
 
+const getMyReports = async (req, res) => {
+  const reports = await Report.find({ reportedBy: req.user._id }).sort({
+    createdAt: -1,
+  });
+
+  res.json(reports);
+};
+
 const getReportById = async (req, res) => {
   const report = await Report.findById(req.params.id).populate(
     "reportedBy",
@@ -97,6 +105,7 @@ const deleteReport = async (req, res) => {
 module.exports = {
   createReport,
   getReports,
+  getMyReports,
   getReportById,
   updateReport,
   deleteReport,

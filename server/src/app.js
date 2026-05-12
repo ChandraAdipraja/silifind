@@ -45,6 +45,18 @@ const availableEndpoints = [
     description: "Get authenticated user profile",
   },
   {
+    method: "PUT",
+    path: "/api/auth/profile",
+    access: "authenticated",
+    description: "Update authenticated user profile",
+  },
+  {
+    method: "PUT",
+    path: "/api/auth/reset-password",
+    access: "authenticated",
+    description: "Reset authenticated user password",
+  },
+  {
     method: "POST",
     path: "/api/reports",
     access: "authenticated",
@@ -55,6 +67,12 @@ const availableEndpoints = [
     path: "/api/reports",
     access: "public",
     description: "Get all reports",
+  },
+  {
+    method: "GET",
+    path: "/api/reports/my-reports",
+    access: "authenticated",
+    description: "Get reports created by authenticated user",
   },
   {
     method: "GET",

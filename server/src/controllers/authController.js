@@ -113,8 +113,107 @@ const getProfile = async (req, res) => {
   });
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phoneNumber } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User tidak ditemukan",
+      });
+    }
+
+    if (name !== undefined) {
+      if (!String(name).trim()) {
+        return res.status(400).json({
+          message: "Nama lengkap wajib diisi",
+        });
+      }
+
+      user.name = String(name).trim();
+    }
+
+    if (phoneNumber !== undefined) {
+      user.phoneNumber = String(phoneNumber).trim();
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Profile berhasil diperbarui",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "Password saat ini, password baru, dan konfirmasi wajib diisi",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password baru minimal 6 karakter",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "Konfirmasi password baru tidak cocok",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User tidak ditemukan",
+      });
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Password saat ini salah",
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password berhasil diperbarui",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
+  updateProfile,
+  resetPassword,
 };

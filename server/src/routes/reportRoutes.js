@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createReport,
   getReports,
+  getMyReports,
   getReportById,
   updateReport,
   deleteReport,
@@ -14,6 +15,8 @@ const { protect } = require("../middleware/authMiddleware");
 router.post("/", protect, createReport);
 
 router.get("/", getReports);
+
+router.get("/my-reports", protect, getMyReports);
 
 router.get("/:id", getReportById);
 
