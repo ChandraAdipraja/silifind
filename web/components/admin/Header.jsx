@@ -55,7 +55,7 @@ export default function Header({ user, pathname }) {
     () => () => {
       clearTimeout(searchTimeout.current);
     },
-    []
+    [],
   );
 
   return (
@@ -107,28 +107,6 @@ export default function Header({ user, pathname }) {
               </button>
             ) : null}
           </form>
-
-          <button
-            type="button"
-            className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:flex"
-            aria-label="Notifications"
-          >
-            <Bell size={19} />
-          </button>
-
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-sm font-bold text-white">
-              {initial}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-950">
-                {user?.name || "SiliFind Staff"}
-              </p>
-              <div className="mt-1">
-                <StatusBadge value={user?.role || "operator"} />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </header>

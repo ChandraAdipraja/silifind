@@ -7,6 +7,14 @@ import AccessDenied from "../../components/admin/AccessDenied";
 import Header from "../../components/admin/Header";
 import Sidebar from "../../components/admin/Sidebar";
 
+const pageTitles = {
+  "/admin/dashboard": "Dashboard",
+  "/admin/reports": "Reports Management",
+  "/admin/claims": "Claims Verification",
+  "/admin/users": "Users Management",
+  "/admin/profile": "Profile",
+};
+
 export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -14,6 +22,7 @@ export default function AdminLayout({ children }) {
   const [loading, setLoading] = useState(true);
   const [denied, setDenied] = useState(false);
   const [deniedMessage, setDeniedMessage] = useState("");
+  const showHeader = pathname === "/admin/dashboard";
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -26,7 +35,8 @@ export default function AdminLayout({ children }) {
 
       try {
         const response = await api.get("/auth/profile");
-        const profile = response.data?.user || response.data?.data || response.data;
+        const profile =
+          response.data?.user || response.data?.data || response.data;
 
         if (!["admin", "operator"].includes(profile?.role)) {
           localStorage.removeItem("token");
@@ -35,7 +45,9 @@ export default function AdminLayout({ children }) {
         }
 
         if (pathname === "/admin/users" && profile.role !== "admin") {
-          setDeniedMessage("Akses ditolak. Users Management hanya dapat diakses oleh admin.");
+          setDeniedMessage(
+            "Akses ditolak. Users Management hanya dapat diakses oleh admin.",
+          );
           setDenied(true);
           return;
         }
@@ -66,11 +78,27 @@ export default function AdminLayout({ children }) {
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <Sidebar user={user} />
       <div className="lg:pl-72">
-        <Suspense fallback={null}>
-          <Header user={user} pathname={pathname} />
-        </Suspense>
+        {showHeader ? (
+          <Suspense fallback={null}>
+            <Header user={user} pathname={pathname} />
+          </Suspense>
+        ) : (
+          <TextHeader pathname={pathname} />
+        )}
         <main className="px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
     </div>
+  );
+}
+
+function TextHeader({ pathname }) {
+  const title = pageTitles[pathname] || "SiliFind Dashboard";
+
+  return (
+    <header className="border-b border-slate-200 bg-slate-50 px-4 py-5 md:px-8">
+      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+        {title}
+      </h1>
+    </header>
   );
 }

@@ -15,7 +15,12 @@ const menu = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Reports Management", href: "/admin/reports", icon: FileSearch },
   { label: "Claims Verification", href: "/admin/claims", icon: ShieldCheck },
-  { label: "Users Management", href: "/admin/users", icon: Users, adminOnly: true },
+  {
+    label: "Users Management",
+    href: "/admin/users",
+    icon: Users,
+    adminOnly: true,
+  },
   { label: "Profile", href: "/admin/profile", icon: UserCircle },
 ];
 
@@ -64,20 +69,14 @@ export default function Sidebar({ user }) {
           })}
       </nav>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-semibold text-slate-950">
-          {user?.name || "Operator"}
-        </p>
-        <p className="mt-1 truncate text-xs text-slate-500">{user?.email}</p>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-rose-50"
-        >
-          <LogOut size={17} />
-          Logout
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-rose-50"
+      >
+        <LogOut size={17} />
+        Logout
+      </button>
     </aside>
   );
 }
