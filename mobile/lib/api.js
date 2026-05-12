@@ -57,39 +57,44 @@ export function getErrorMessage(error, fallback = "Terjadi kesalahan") {
 }
 
 export async function uploadImage(asset) {
-  const formData = new FormData();
   const name = asset.fileName ?? `silifind-${Date.now()}.jpg`;
   const type = asset.mimeType ?? getMimeType(name);
 
   if (Platform.OS === "web") {
+    const formData = new FormData();
     const file = asset.file ?? (await createWebFile(asset.uri, name, type));
     formData.append("image", file);
-  } else {
-    formData.append("image", {
-      uri: asset.uri,
-      name,
-      type,
+
+    const token = await getToken();
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: "POST",
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : undefined,
+      body: formData,
     });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Gagal upload gambar");
+    }
+
+    return data.url;
   }
 
-  const token = await getToken();
-  const response = await fetch(`${API_BASE_URL}/uploads`, {
-    method: "POST",
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-    body: formData,
+  if (!asset.base64) {
+    throw new Error("Gagal membaca gambar dari perangkat");
+  }
+
+  const response = await api.post("/uploads/base64", {
+    imageBase64: asset.base64,
+    mimeType: type,
   });
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data?.message || "Gagal upload gambar");
-  }
-
-  return data.url;
+  return response.data.url;
 }
 
 async function createWebFile(uri, name, type) {
