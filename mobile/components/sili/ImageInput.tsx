@@ -22,7 +22,7 @@ export function ImageInput({ label, value, onChange }: ImageInputProps) {
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.55,
     });
 
     if (!result.canceled) {
@@ -41,7 +41,7 @@ export function ImageInput({ label, value, onChange }: ImageInputProps) {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.55,
     });
 
     if (!result.canceled) {

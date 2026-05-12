@@ -7,9 +7,10 @@ export const TOKEN_KEY = "silifind.token";
 let unauthorizedHandler = null;
 
 const defaultBaseURL = "https://silifind.onrender.com/api";
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? defaultBaseURL;
 
 export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? defaultBaseURL,
+  baseURL: API_BASE_URL,
   timeout: 20000,
 });
 
@@ -71,9 +72,24 @@ export async function uploadImage(asset) {
     });
   }
 
-  const response = await api.post("/uploads", formData);
+  const token = await getToken();
+  const response = await fetch(`${API_BASE_URL}/uploads`, {
+    method: "POST",
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+    body: formData,
+  });
 
-  return response.data.url;
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Gagal upload gambar");
+  }
+
+  return data.url;
 }
 
 async function createWebFile(uri, name, type) {

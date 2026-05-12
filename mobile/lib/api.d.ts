@@ -40,6 +40,7 @@ export type Claim = {
 };
 
 export const TOKEN_KEY: string;
+export const API_BASE_URL: string;
 export const api: AxiosInstance;
 export function saveToken(token: string): Promise<void>;
 export function getToken(): Promise<string | null>;

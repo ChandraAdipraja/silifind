@@ -5,6 +5,25 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.post("/", protect, upload.single("image"), uploadImage);
+const handleImageUpload = (req, res, next) => {
+  upload.single("image")(req, res, (error) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        message: "Ukuran gambar maksimal 5MB",
+      });
+    }
+
+    return res.status(400).json({
+      message: error.message || "Gagal upload gambar",
+    });
+  });
+};
+
+router.post("/", protect, handleImageUpload, uploadImage);
 
 module.exports = router;
