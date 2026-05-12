@@ -7,10 +7,10 @@ export const TOKEN_KEY = "silifind.token";
 let unauthorizedHandler = null;
 
 const defaultBaseURL = "https://silifind.onrender.com/api";
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? defaultBaseURL;
+const MAX_UPLOAD_SIZE = 2 * 1024 * 1024;
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL ?? defaultBaseURL,
   timeout: 20000,
 });
 
@@ -57,41 +57,30 @@ export function getErrorMessage(error, fallback = "Terjadi kesalahan") {
 }
 
 export async function uploadImage(asset) {
+  if (asset.fileSize && asset.fileSize > MAX_UPLOAD_SIZE) {
+    throw new Error("Ukuran foto maksimal 2 MB. Pilih foto yang lebih kecil.");
+  }
+
+  const formData = new FormData();
   const name = asset.fileName ?? `silifind-${Date.now()}.jpg`;
   const type = asset.mimeType ?? getMimeType(name);
 
   if (Platform.OS === "web") {
-    const formData = new FormData();
     const file = asset.file ?? (await createWebFile(asset.uri, name, type));
     formData.append("image", file);
-
-    const token = await getToken();
-    const response = await fetch(`${API_BASE_URL}/uploads`, {
-      method: "POST",
-      headers: token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : undefined,
-      body: formData,
+  } else {
+    formData.append("image", {
+      uri: asset.uri,
+      name,
+      type,
     });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(data?.message || "Gagal upload gambar");
-    }
-
-    return data.url;
   }
 
-  if (!asset.base64) {
-    throw new Error("Gagal membaca gambar dari perangkat");
-  }
-
-  const response = await api.post("/uploads/base64", {
-    imageBase64: asset.base64,
-    mimeType: type,
+  const response = await api.post("/uploads", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 60000,
   });
 
   return response.data.url;

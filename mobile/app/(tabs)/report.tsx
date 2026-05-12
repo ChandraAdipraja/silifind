@@ -10,6 +10,16 @@ import { Coordinates, useCurrentLocation } from '@/hooks/use-current-location';
 import { api, getErrorMessage, uploadImage } from '@/lib/api';
 
 type ReportType = 'lost' | 'found';
+const CATEGORY_OPTIONS = [
+  'Elektronik',
+  'Dokumen',
+  'Tas & Dompet',
+  'Kunci',
+  'Pakaian & Aksesori',
+  'Perlengkapan Kuliah',
+  'Barang Pribadi',
+  'Other',
+];
 
 export default function ReportScreen() {
   const router = useRouter();
@@ -17,6 +27,8 @@ export default function ReportScreen() {
   const [type, setType] = useState<ReportType>('lost');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
@@ -56,12 +68,19 @@ export default function ReportScreen() {
     setLoading(true);
 
     try {
+      const selectedCategory =
+        category === 'Other' ? customCategory.trim() : category;
+
+      if (!selectedCategory) {
+        throw new Error('Kategori wajib dipilih.');
+      }
+
       const imageUrl = image ? await uploadImage(image) : null;
 
       await api.post('/reports', {
         type,
         title,
-        category,
+        category: selectedCategory,
         description,
         location,
         coordinates,
@@ -70,6 +89,8 @@ export default function ReportScreen() {
 
       setTitle('');
       setCategory('');
+      setCustomCategory('');
+      setCategoryOpen(false);
       setDescription('');
       setLocation('');
       setCoordinates(null);
@@ -95,7 +116,61 @@ export default function ReportScreen() {
 
       <View className="gap-4 rounded-3xl bg-white p-5 shadow-sm">
         <Field placeholder="Judul laporan" value={title} onChangeText={setTitle} />
-        <Field placeholder="Kategori" value={category} onChangeText={setCategory} />
+        <View className="gap-2">
+          <Pressable
+            onPress={() => setCategoryOpen((current) => !current)}
+            className="h-14 flex-row items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4"
+          >
+            <Text className={`text-base ${category ? 'text-ink' : 'text-slate-400'}`}>
+              {category || 'Kategori'}
+            </Text>
+            <MaterialIcons
+              name={categoryOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              size={24}
+              color="#64748b"
+            />
+          </Pressable>
+
+          {categoryOpen ? (
+            <View className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              {CATEGORY_OPTIONS.map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => {
+                    setCategory(option);
+                    setCategoryOpen(false);
+
+                    if (option !== 'Other') {
+                      setCustomCategory('');
+                    }
+                  }}
+                  className={`flex-row items-center justify-between border-b border-slate-100 px-4 py-3 last:border-b-0 ${
+                    category === option ? 'bg-primary-50' : 'bg-white'
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-semibold ${
+                      category === option ? 'text-primary-700' : 'text-slate-700'
+                    }`}
+                  >
+                    {option}
+                  </Text>
+                  {category === option ? (
+                    <MaterialIcons name="check" size={18} color="#0f766e" />
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
+          {category === 'Other' ? (
+            <Field
+              placeholder="Tulis kategori lainnya"
+              value={customCategory}
+              onChangeText={setCustomCategory}
+            />
+          ) : null}
+        </View>
         <View className="gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
           <TextInput
             multiline
