@@ -22,6 +22,7 @@ export default function ProfileScreen() {
   const { user, logout, refreshProfile } = useAuth();
   const { showToast } = useToast();
   const [name, setName] = useState(user?.name ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,7 +38,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     setName(user?.name ?? "");
-  }, [user?.name]);
+    setPhoneNumber(user?.phoneNumber ?? "");
+  }, [user?.name, user?.phoneNumber]);
 
   const loadReports = useCallback(async () => {
     try {
@@ -80,11 +82,33 @@ export default function ProfileScreen() {
   }
 
   async function handleUpdateProfile() {
+    const trimmedName = name.trim();
+    const sanitizedPhone = phoneNumber.trim();
+
+    if (!trimmedName) {
+      showToast({
+        type: "error",
+        title: "Data belum lengkap",
+        message: "Nama lengkap wajib diisi.",
+      });
+      return;
+    }
+
+    if (!/^[0-9]{10,15}$/.test(sanitizedPhone)) {
+      showToast({
+        type: "error",
+        title: "Nomor telepon tidak valid",
+        message: "Nomor telepon harus berisi 10-15 digit angka.",
+      });
+      return;
+    }
+
     setProfileLoading(true);
 
     try {
       await api.put("/auth/profile", {
-        name: name.trim(),
+        name: trimmedName,
+        phoneNumber: sanitizedPhone,
       });
       await refreshProfile();
       setEditOpen(false);
@@ -208,7 +232,7 @@ export default function ProfileScreen() {
       <ProfileModal
         open={editOpen}
         title="Edit Profile"
-        description="Perbarui nama lengkap yang tampil di akun kamu."
+        description="Perbarui nama lengkap dan nomor telepon akun kamu."
         onClose={() => setEditOpen(false)}
       >
         <Field
@@ -216,6 +240,13 @@ export default function ProfileScreen() {
           placeholder="Nama lengkap"
           value={name}
           onChangeText={setName}
+        />
+        <Field
+          label="Nomor Telepon"
+          placeholder="Contoh: 081234567890"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
         />
         <ModalButton
           icon="save"
@@ -368,12 +399,14 @@ function ModalButton({
 }
 
 function Field({
+  keyboardType = "default",
   label,
   onChangeText,
   placeholder,
   secureTextEntry = false,
   value,
 }: {
+  keyboardType?: "default" | "email-address" | "phone-pad" | "numeric";
   label: string;
   onChangeText: (value: string) => void;
   placeholder: string;
@@ -385,6 +418,7 @@ function Field({
       <Text className="mb-2 text-sm font-bold text-slate-700">{label}</Text>
       <TextInput
         onChangeText={onChangeText}
+        keyboardType={keyboardType}
         placeholder={placeholder}
         placeholderTextColor="#94a3b8"
         secureTextEntry={secureTextEntry}
